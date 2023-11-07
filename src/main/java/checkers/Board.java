@@ -22,8 +22,8 @@ public class Board {
 
     public void makeMove(int rowFrom, int colFrom, int rowTo, int colTo) {
         Space space = new Space();
-        String spaceFrom = space.locators[rowFrom][colFrom];
-        String spaceTo = space.locators[rowTo][colTo];
+        String spaceFrom = space.getLocators()[rowFrom][colFrom];
+        String spaceTo = space.getLocators()[rowTo][colTo];
         By locatorFrom = By.xpath(format("//*[@name='%s']", spaceFrom));
         By locatorTo = By.xpath(format("//*[@name='%s']", spaceTo));
         driver.findElement(locatorFrom).click();
@@ -38,7 +38,7 @@ public class Board {
 
     public void assertSpotIsOccupied(int rowTo, int colTo) {
         Space space = new Space();
-        String spaceTo = space.locators[rowTo][colTo];
+        String spaceTo = space.getLocators()[rowTo][colTo];
         By locatorTo = By.xpath(format("//*[@name='%s']", spaceTo));
         assert (driver.findElement(locatorTo).getAttribute("src").contains("you"));
     }

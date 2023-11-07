@@ -1,12 +1,16 @@
 package checkers;
 
 public class Space {
-    public String[][] locators;
+    private String[][] locators;
 
     public Space() {
         // Constructor. Create the spaces with locators
         locators = new String[8][8];
         setUpLocators();
+    }
+
+    public String[][] getLocators() {
+        return locators;
     }
 
     public void setUpLocators() {

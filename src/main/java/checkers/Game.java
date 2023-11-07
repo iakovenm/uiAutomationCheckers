@@ -12,13 +12,14 @@ import java.time.Duration;
 public class Game {
     private ChromeDriver driver;
     private Board board;
-    private By restartLink = By.partialLinkText("Restart...");
+    private By restartLink = By.xpath("//a[text()='Restart...']");
     private By makeMoveMessage = By.xpath("//p[@id='message']");
 
     public Game() {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--remote-allow-origins=*");
+        //options.addArguments("--headless");
         driver = new ChromeDriver(options);
         driver.get("https://www.gamesforthebrain.com/game/checkers/");
 
@@ -36,6 +37,7 @@ public class Game {
 
     public Board restart() {
         driver.findElement(restartLink).click();
+        //nothing is done with the returned board but was implemented for possible further logic convenience
         board = new Board(driver);
         return board;
     }
