@@ -18,129 +18,56 @@ in our case it could be 2-dimensional array add locators for each space.
 8) Implement game construct
 
 
-# -- Stage: Python Build -----------------------------------------------------------
-FROM ccicnexus1.us.crowncastle.com:8843/base-image-python-3-12-alpine-3-20:latest AS python-builder
+#! /bin/bash
+# This script submits playwright test results to QMetry if and only if the APP_NAME, TEST_SUITE_ID, AUTOMATION_API_KEY, and OPEN_API_KEY are set
+# First it uploads the qmt-results.xml file that is the output of run-tests' npx run-func
+# Then it zips the reports directory and uploads it as an attachment, capturing the attachement id from the response
+# It then submits the test suite execution and captures the test suite execution id from the response
+# Finally it links the attachment to the test suite execution
 
-RUN apk update && \
-    apk upgrade --available
+# not setting -euo pipefail nounset because we want to continue even if the test suite execution fails
+echo "Installing the test project"
+#set registry to internal npm continuous repository
+npm config set registry https://nexus.crowncastle.com/repository/npm-crown-all/
+npm config set strict-ssl false
+#sets the TNS_ADMIN environment variable to the location of the OraNet installation, but expecting this isn't actually accessible from Harness-- used for local testing
+export TNS_ADMIN='\\netapp4_svm\OraNet'
+#Go into the TEST_DIR, install according to the package-lock.json, and run the tests
+INITIAL_DIR=`pwd`
+cd "${TEST_DIR}"
+npm ci
 
-COPY requirements.txt requirements.txt
-COPY ./src/main.py /src/main.py
+#declare integer variables to capture the results of the playwright test suite execution & the test results submission
+declare -i TEST_SUITE_EXIT_CODE=0
+declare -i TEST_PUBLISH_EXIT_CODE=0
+declare -i FINAL_RETURN_CODE=0
+echo "Running $TEST_TAGS tests in $TEST_ENV"
+CI=true TEST_ENV=$TEST_ENV PW_TEST_HTML_REPORT_OPEN=never npx playwright test --project=chromium --grep $TEST_TAGS --config=playwright.config.js
+TEST_SUITE_EXIT_CODE+=$?
+echo "Test suite exit code: ${TEST_SUITE_EXIT_CODE}"
 
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# -- Stage: Python Testing ---------------------------------------------------------
-FROM python-builder AS test
-
-COPY requirements-dev.txt requirements-dev.txt
-COPY ./src/main_test.py /src/main_test.py
-
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
-WORKDIR /
-
-ENTRYPOINT [ "pytest" ]
-CMD [ "src", "--doctest-modules", "--junitxml=/volume/junit/test-results.xml", "--cov=./src", "--cov-report=xml:/volume/coverage/xml/coverage.xml", "--cov-report=term-missing", "--cov-branch" ]
-
-# -- Stage: Playwright Build -----------------------------------------------------------
-FROM mcr.microsoft.com/playwright:v1.49.0-noble AS playwright-builder
-
-RUN apt-get update && \
-    apt-get -y upgrade && \
-    apt-get remove -y libtheora0 && \
-    apt-get clean autoclean && \
-    apt-get autoremove --yes && \
-    rm -rf /var/lib/{apt,dpkg,cache,log}/
-    
-# Ensure the .postman directory exists before attempting to change ownership, download and install Postman CLI and change ownership of the .postman directory to pwuser
-RUN mkdir -p /root/.postman && chmod -R 777 /root/.postman \
-    && curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh \
-    && chown pwuser /root/.postman
-
-# Docker image to run playwright tests
-WORKDIR /project
-COPY ./run-tests.sh .
-COPY ./submit-results.sh .
-
-# -- Stage: FINAL ------------------------------------------------------------------
-FROM playwright-builder AS artifact
-
-RUN apt-get -y update && \
-    apt install -y git python3 zip unzip jq libnss3-tools supervisor && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=python-builder /src/main.py /src/main.py
-
-# Copy all .p7c certificate files from the /certs directory into the container temp folder.
-COPY /certs/*.p7c /tmp/
-
-# Convert all .p7c certificates to .pem format and install them
-RUN for cert in /tmp/*.p7c; do \
-    openssl pkcs7 -inform DER -print_certs -in "$cert" -out "${cert%.p7c}.pem" && \
-    cp "${cert%.p7c}.pem" /usr/share/ca-certificates/$(basename "${cert%.p7c}.crt"); \
-    done && \
-    update-ca-certificates && \
-    rm /tmp/*.p7c
-
-# Create Chrome NSSDB where chromium is looking for certificates currently under root
-RUN mkdir -p /root/.pki/nssdb && \
-  certutil -N -d sql:/root/.pki/nssdb --empty-password
-
-# Import the certificates into the Chrom NSS database
-RUN for cert in /usr/share/ca-certificates/*.crt; do \
-        certutil -A -d sql:/root/.pki/nssdb -n "$(basename $cert)" -t "C,," -i $cert; \
-    done    
-
-# Copy the chrome policy file
-COPY /chrome_settings/policy.json /etc/chromium/policies/managed/policy.json   
-
-# Supervisord setup for Playwright server
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-RUN chown pwuser /project
-RUN chmod +x /project/run-tests.sh /project/submit-results.sh
-RUN ["ln", "-sf", "/usr/bin/bash", "/usr/bash"]
-RUN ["ln", "-sf", "/usr/bin/python3", "/usr/bin/python"]
-
-WORKDIR /project
-
-# Expose Playwright server WebSocket port
-EXPOSE 9323
-
-VOLUME [/project/test-library]
-
-CMD ["supervisord"]
-
-RUN tests.sh
-#!/bin/bash
-# Wait for the Playwright server to start
-until nc -z localhost 9323; do
-  echo "Waiting for Playwright server..."
-  sleep 2
-done
-
-# Run Playwright tests
-npx playwright test
-
-supervisord.conf
-
-[supervisord]
-nodaemon=true
-
-[program:playwright-server]
-command=npx playwright show-server
-directory=/project
-stdout_logfile=/dev/stdout
-stderr_logfile=/dev/stderr
-autostart=true
-autorestart=true
-
-[program:tests]
-command=./run-tests.sh
-directory=/project
-stdout_logfile=/dev/stdout
-stderr_logfile=/dev/stderr
-autostart=false
-autorestart=false
-
+#Switch out of TEST_DIR so as to avoid attempting to use the node_modules installation present there
+echo "Generating reports"
+cd "${INITIAL_DIR}"
+echo "Processing from "`pwd`
+#run qmetry-report.js to translate the TEST_DIR/results.xml into a qmt-results.xml file
+echo "Invoking 'npx run-func ${TEST_DIR}/node_modules/qaeng-automation-engine/src/playwright/qmetry-report.js createQmetryReport ${TEST_DIR}/results.xml'"
+npx --yes run-func "${TEST_DIR}/node_modules/qaeng-automation-engine/src/playwright/qmetry-report.js" createQmetryReport "${TEST_DIR}/results.xml"
+#place the qmt-results files into the results locations expected by the submit-results.sh script
+cp "${INITIAL_DIR}/reports/playwright/qmt-results.xml" "${TEST_DIR}/qmt-results.xml"
+cp "${INITIAL_DIR}/reports/playwright/qmt-results.xml" "${TEST_DIR}/reports/playwright/qmt-results.xml"
+#copy the reports out to the /volume mount point
+echo "Exporting reports to /volume/reports"
+mkdir -m777 -p /volume/reports
+#maybe want to not do this for the zipped reports directory
+cp -a "${TEST_DIR}/reports/." /volume/reports/
+chmod -R 777 /volume
+echo "Completed export"
+#attempt to submit test results, but if the appropriate environment variables aren't set, then bypass submission
+echo "Attempting to submit test results"
+source "${INITIAL_DIR}/submit-results.sh"
+TEST_PUBLISH_EXIT_CODE+=$?
+echo "Test publish exit code: ${TEST_PUBLISH_EXIT_CODE}"
+FINAL_RETURN_CODE=$(($TEST_SUITE_EXIT_CODE + $TEST_PUBLISH_EXIT_CODE))
+echo "Final return code: ${FINAL_RETURN_CODE}"  
+exit $FINAL_RETURN_CODE
