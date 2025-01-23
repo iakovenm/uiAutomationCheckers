@@ -17,11 +17,10 @@ in our case it could be 2-dimensional array add locators for each space.
 7) Implement canJump and canMove methods
 8) Implement game construct
 
-
-#! /bin/bash
+#!/bin/bash
 # This script submits playwright test results to QMetry if and only if the APP_NAME, TEST_SUITE_ID, AUTOMATION_API_KEY, and OPEN_API_KEY are set
 # First it uploads the qmt-results.xml file that is the output of run-tests' npx run-func
-# Then it zips the reports directory and uploads it as an attachment, capturing the attachement id from the response
+# Then it zips the reports directory and uploads it as an attachment, capturing the attachment id from the response
 # It then submits the test suite execution and captures the test suite execution id from the response
 # Finally it links the attachment to the test suite execution
 
@@ -32,12 +31,19 @@ npm config set registry https://nexus.crowncastle.com/repository/npm-crown-all/
 npm config set strict-ssl false
 #sets the TNS_ADMIN environment variable to the location of the OraNet installation, but expecting this isn't actually accessible from Harness-- used for local testing
 export TNS_ADMIN='\\netapp4_svm\OraNet'
-#Go into the TEST_DIR, install according to the package-lock.json, and run the tests
+
+# Go into the TEST_DIR, install according to the package-lock.json, and run the tests
 INITIAL_DIR=`pwd`
 cd "${TEST_DIR}"
 npm ci
 
-#declare integer variables to capture the results of the playwright test suite execution & the test results submission
+# Wait for the Playwright server to start
+until nc -z localhost 9323; do
+  echo "Waiting for Playwright server..."
+  sleep 2
+done
+
+# Declare integer variables to capture the results of the playwright test suite execution & the test results submission
 declare -i TEST_SUITE_EXIT_CODE=0
 declare -i TEST_PUBLISH_EXIT_CODE=0
 declare -i FINAL_RETURN_CODE=0
@@ -46,28 +52,32 @@ CI=true TEST_ENV=$TEST_ENV PW_TEST_HTML_REPORT_OPEN=never npx playwright test --
 TEST_SUITE_EXIT_CODE+=$?
 echo "Test suite exit code: ${TEST_SUITE_EXIT_CODE}"
 
-#Switch out of TEST_DIR so as to avoid attempting to use the node_modules installation present there
+# Switch out of TEST_DIR so as to avoid attempting to use the node_modules installation present there
 echo "Generating reports"
 cd "${INITIAL_DIR}"
 echo "Processing from "`pwd`
-#run qmetry-report.js to translate the TEST_DIR/results.xml into a qmt-results.xml file
+
+# Run qmetry-report.js to translate the TEST_DIR/results.xml into a qmt-results.xml file
 echo "Invoking 'npx run-func ${TEST_DIR}/node_modules/qaeng-automation-engine/src/playwright/qmetry-report.js createQmetryReport ${TEST_DIR}/results.xml'"
 npx --yes run-func "${TEST_DIR}/node_modules/qaeng-automation-engine/src/playwright/qmetry-report.js" createQmetryReport "${TEST_DIR}/results.xml"
-#place the qmt-results files into the results locations expected by the submit-results.sh script
+
+# Place the qmt-results files into the results locations expected by the submit-results.sh script
 cp "${INITIAL_DIR}/reports/playwright/qmt-results.xml" "${TEST_DIR}/qmt-results.xml"
 cp "${INITIAL_DIR}/reports/playwright/qmt-results.xml" "${TEST_DIR}/reports/playwright/qmt-results.xml"
-#copy the reports out to the /volume mount point
+
+# Copy the reports out to the /volume mount point
 echo "Exporting reports to /volume/reports"
 mkdir -m777 -p /volume/reports
-#maybe want to not do this for the zipped reports directory
 cp -a "${TEST_DIR}/reports/." /volume/reports/
 chmod -R 777 /volume
 echo "Completed export"
-#attempt to submit test results, but if the appropriate environment variables aren't set, then bypass submission
+
+# Attempt to submit test results, but if the appropriate environment variables aren't set, then bypass submission
 echo "Attempting to submit test results"
 source "${INITIAL_DIR}/submit-results.sh"
 TEST_PUBLISH_EXIT_CODE+=$?
 echo "Test publish exit code: ${TEST_PUBLISH_EXIT_CODE}"
+
 FINAL_RETURN_CODE=$(($TEST_SUITE_EXIT_CODE + $TEST_PUBLISH_EXIT_CODE))
-echo "Final return code: ${FINAL_RETURN_CODE}"  
+echo "Final return code: ${FINAL_RETURN_CODE}"
 exit $FINAL_RETURN_CODE
