@@ -18,132 +18,58 @@ in our case it could be 2-dimensional array add locators for each space.
 8) Implement game construct
 
 
-# -- Stage: Python Build -----------------------------------------------------------
-FROM ccicnexus1.us.crowncastle.com:8843/base-image-python-3-12-alpine-3-20:latest AS python-builder
-
-RUN apk update && \
-    apk upgrade --available
-
-COPY requirements.txt requirements.txt
-COPY ./src/main.py /src/main.py
-
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# -- Stage: Python Testing ---------------------------------------------------------
-FROM python-builder AS test
-
-COPY requirements-dev.txt requirements-dev.txt
-COPY ./src/main_test.py /src/main_test.py
-
-RUN pip install --no-cache-dir -r requirements-dev.txt
-
-WORKDIR /
-
-ENTRYPOINT [ "pytest" ]
-CMD [ "src", "--doctest-modules", "--junitxml=/volume/junit/test-results.xml", "--cov=./src", "--cov-report=xml:/volume/coverage/xml/coverage.xml", "--cov-report=term-missing", "--cov-branch" ]
-
 # -- Stage: Playwright Build -----------------------------------------------------------
-FROM ccicnexus1.us.crowncastle.com:8843/base-image-node-22-alpine-3-20:latest AS playwright-builder
+FROM node:22-alpine AS playwright-builder
 
-RUN apk update && \
-    apk upgrade --available && \
-    apk add --no-cache \
+# Install base dependencies
+RUN apk update && apk add --no-cache \
     bash \
     curl \
     nss \
     freetype \
     harfbuzz \
     ttf-freefont \
-    ca-certificates \
-    libx11 \
-    libxcomposite \
-    libxdamage \
-    libxrandr \
-    libxi \
-    libxtst \
+    font-noto \
+    font-noto-cjk \
+    font-noto-emoji \
+    libstdc++ \
+    libc6-compat \
+    chromium \
+    chromium-chromedriver \
+    libjpeg-turbo \
+    libxrender \
+    libxcb \
+    fontconfig \
     alsa-lib \
     gtk+3.0 \
     openssl \
-    # chromium=127.0.6533.5-r0 \
-    glib \
-    gobject-introspection \
-    gcompat \
-    libdrm \
-    mesa \
+    libxi \
+    libxtst \
     mesa-dri-gallium \
-    mesa-gl 
+    mesa-gl \
+    libdrm \
+    strace \
+    gdb \
+    xvfb
 
-# Install glibc compatibility layer
+# Install glibc for compatibility
 RUN apk add --no-cache --virtual .build-deps \
-    binutils \
-    && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
-    && curl -Lo /tmp/glibc.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk \
-    && apk add --no-cache --force-overwrite /tmp/glibc.apk \
-    && apk del .build-deps \
-    && rm -rf /var/cache/apk/* /tmp/*
+    binutils && \
+    curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    curl -Lo /tmp/glibc.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk && \
+    apk add --no-cache /tmp/glibc.apk && \
+    apk del .build-deps && \
+    rm -rf /var/cache/apk/* /tmp/*
 
 # Install Playwright and ensure the browser is installed correctly
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright@1.45.0 install chromium && \ 
+RUN npx playwright install-deps && \
+    npx playwright install chromium && \
     chmod -R 777 /ms-playwright
 
-# Set LD_LIBRARY_PATH to include /usr/lib
-# ENV LD_LIBRARY_PATH=/usr/lib
-ENV LD_LIBRARY_PATH=/usr/lib:/lib
-   
-# Ensure the .postman directory exists before attempting to change ownership, download and install Postman CLI
-RUN mkdir -p /root/.postman && chmod -R 777 /root/.postman \
-    && curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+# Configure LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/lib:/usr/lib64:/lib:/lib64
 
-# Docker image to run playwright tests
 WORKDIR /project
 COPY ./run-tests.sh .
 COPY ./submit-results.sh .
-
-# -- Stage: FINAL ------------------------------------------------------------------
-
-FROM playwright-builder AS artifact
-
-RUN apk update && \
-    apk add --no-cache git python3 zip unzip jq nss-tools && \
-    rm -rf /var/cache/apk/*
-
-# Review
-RUN rm -rf /usr/lib/python3.11/ensurepip/ && \
-    rm -rf /var/cache/apt
-
-COPY --from=python-builder /src/main.py /src/main.py
-
-# Copy all .p7c certificate files from the /certs directory into the container temp folder.
-COPY /certs/*.p7c /tmp/
-
-# Convert all .p7c certificates to .pem format and install them
-RUN for cert in /tmp/*.p7c; do \
-    openssl pkcs7 -inform DER -print_certs -in "$cert" -out "${cert%.p7c}.pem" && \
-    cp "${cert%.p7c}.pem" /usr/share/ca-certificates/$(basename "${cert%.p7c}.crt"); \
-    done && \
-    update-ca-certificates && \
-    rm /tmp/*.p7c
-
-# Create Chrome NSSDB where chromium is looking for certificates currently under root
-RUN mkdir -p /root/.pki/nssdb && \
-    certutil -N -d sql:/root/.pki/nssdb --empty-password
-
-# Import the certificates into the Chrome NSS database
-RUN for cert in /usr/share/ca-certificates/*.crt; do \
-        certutil -A -d sql:/root/.pki/nssdb -n "$(basename $cert)" -t "C,," -i $cert; \
-    done    
-
-# Copy the chrome policy file
-COPY /chrome_settings/policy.json /etc/chromium/policies/managed/policy.json   
-
-RUN chmod +x /project/run-tests.sh /project/submit-results.sh
-RUN ["ln", "-sf", "/usr/bin/bash", "/usr/bash"]
-RUN ["ln", "-sf", "/usr/bin/python3", "/usr/bin/python"]
-
-WORKDIR /project
-
-VOLUME ["/project/test-library"]
-
-ENTRYPOINT ["python", "/src/main.py"]
-CMD ["--help"]
