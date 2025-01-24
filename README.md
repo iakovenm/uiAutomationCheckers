@@ -18,58 +18,24 @@ in our case it could be 2-dimensional array add locators for each space.
 8) Implement game construct
 
 
-# -- Stage: Playwright Build -----------------------------------------------------------
-FROM node:22-alpine AS playwright-builder
-
-# Install base dependencies
-RUN apk update && apk add --no-cache \
-    bash \
-    curl \
-    nss \
-    freetype \
-    harfbuzz \
-    ttf-freefont \
-    font-noto \
-    font-noto-cjk \
-    font-noto-emoji \
-    libstdc++ \
-    libc6-compat \
-    chromium \
-    chromium-chromedriver \
-    libjpeg-turbo \
-    libxrender \
-    libxcb \
-    fontconfig \
-    alsa-lib \
-    gtk+3.0 \
-    openssl \
-    libxi \
-    libxtst \
-    mesa-dri-gallium \
-    mesa-gl \
-    libdrm \
-    strace \
-    gdb \
-    xvfb
-
-# Install glibc for compatibility
-RUN apk add --no-cache --virtual .build-deps \
-    binutils && \
-    curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
-    curl -Lo /tmp/glibc.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.34-r0/glibc-2.34-r0.apk && \
-    apk add --no-cache /tmp/glibc.apk && \
-    apk del .build-deps && \
-    rm -rf /var/cache/apk/* /tmp/*
-
-# Install Playwright and ensure the browser is installed correctly
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright install-deps && \
-    npx playwright install chromium && \
-    chmod -R 777 /ms-playwright
-
-# Configure LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH=/usr/lib:/usr/lib64:/lib:/lib64
-
-WORKDIR /project
-COPY ./run-tests.sh .
-COPY ./submit-results.sh .
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/APKINDEX.tar.gz
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.21/community/x86_64/APKINDEX.tar.gz
+(1/3) Installing jansson (2.14-r4)
+(2/3) Installing binutils (2.43.1-r1)
+(3/3) Installing .build-deps (20250124.234458)
+Executing busybox-1.37.0-r9.trigger
+OK: 920 MiB in 237 packages
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+Dload  Upload   Total   Spent    Left  Speed
+0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     00     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   451  100   451    0     0    690      0 --:--:-- --:--:-- --:--:--   690
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+Dload  Upload   Total   Spent    Left  Speed
+0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     00     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+16 1895k   16  318k    0     0   472k      0  0:00:04 --:--:--  0:00:04  472k100 1895k  100 1895k    0     0  2613k      0 --:--:-- --:--:-- --:--:-- 30.7M
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.21/main/x86_64/APKINDEX.tar.gz
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.21/community/x86_64/APKINDEX.tar.gz
+(1/1) Installing glibc (2.34-r0)
+ERROR: glibc-2.34-r0: trying to overwrite etc/nsswitch.conf owned by alpine-baselayout-data-3.6.8-r1.
+ERROR: glibc-2.34-r0: trying to overwrite lib/ld-linux-x86-64.so.2 owned by gcompat-1.1.0-r4.
+ERROR: glibc-2.34-r0: trying to overwrite lib64/ld-linux-x86-64.so.2 owned by gcompat-1.1.0-r4.
+1 error; 925 MiB in 238 packages 
