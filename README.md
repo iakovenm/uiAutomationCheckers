@@ -17,41 +17,11 @@ in our case it could be 2-dimensional array add locators for each space.
 7) Implement canJump and canMove methods
 8) Implement game construct
 
-
-    <launching> /ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --no-sandbox --window-size=1920,1080 --user-data-dir=/tmp/playwright_chromiumdev_profile-DJCKne --remote-debugging-pipe --no-startup-window    
-    <launched> pid=131
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /usr/lib/libasound.so.2: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /usr/lib/libasound.so.2: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /usr/glibc-compat/lib/libdl.so.2)    
-    [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: symbol lookup error: /ms-playwright/chromium-1148/chrome-linux/chrome: undefined symbol: open64, version GLIBC_2.2.5
-    Call log:
-      - <launching> /ms-playwright/chromium-1148/chrome-linux/chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync,Translate,HttpsUpgrades,PaintHolding,ThirdPartyStoragePartitioning,LensOverlay,PlzDedicatedWorker --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --no-sandbox --window-size=1920,1080 --user-data-dir=/tmp/playwright_chromiumdev_profile-DJCKne --remote-debugging-pipe --no-startup-window
-      - <launched> pid=131
-      5 × [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-      2 × [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /usr/lib/libasound.so.2: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-      18 × [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /ms-playwright/chromium-1148/chrome-linux/chrome)
-      - [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: /lib/libpthread.so.0: no version information available (required by /usr/glibc-compat/lib/libdl.so.2)
-      - [pid=131][err] /ms-playwright/chromium-1148/chrome-linux/chrome: symbol lookup error: /ms-playwright/chromium-1148/chrome-linux/chrome: undefined symbol: open64, version GLIBC_2.2.5
+# Install glibc compatibility layer
+RUN apk add --no-cache --virtual .build-deps \
+    binutils \
+    && curl -Lo /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub \
+    && curl -Lo /tmp/glibc.apk https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.38-r0/glibc-2.38-r0.apk \
+    && apk add --no-cache --force-overwrite /tmp/glibc.apk \
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/* /tmp/*
